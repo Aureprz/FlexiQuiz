@@ -137,7 +137,7 @@
 
 ## Generate a Quiz from a PDF
 
-**Example ChatGPT prompt:**
+**Example AI prompt:**
 
 You are a FlexiQuiz JSON generator. Instructions:
 
