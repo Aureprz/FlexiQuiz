@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Communication Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f0f2f5; padding:20px; }
+    h1 { text-align:center; }
+    :root {
+      --spacing-sm: 10px;
+      --spacing-lg: 15px;
+      --primary: #0077cc;
+      --primary-hover: #005fa3;
+      --danger: #d32f2f;
+      --review-explanation: #555;
+      --text-lg: 16px;
+      --text-xl: 20px;
+      --font-bold: 700;
+    }
+    :root[data-theme="review"] {
+      --review-correct: #2e7d32;
+      --review-wrong: #c62828;
+    }
+    .quiz-box { background:#fff; border:1px solid #ccc; padding:20px; margin:20px auto; max-width:750px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    .question { font-size:var(--text-xl); font-weight:var(--font-bold); margin-bottom:var(--spacing-lg); }
+    .options label { display:block; margin-bottom:var(--spacing-sm); font-size:var(--text-lg); }
+    button { margin-top:var(--spacing-sm); padding:10px 20px; border:none; border-radius:8px; background:var(--primary); color:white; cursor:pointer; font-size:var(--text-lg); }
+    button:hover { background:var(--primary-hover); }
+    .result { font-size:18px; font-weight:var(--font-bold); margin-top:var(--spacing-sm); }
+    .score-box { text-align:center; font-size:var(--text-xl); font-weight:var(--font-bold); margin-top:var(--spacing-lg); }
+    .hidden { display:none !important; }
+    .m-sm { margin-bottom:var(--spacing-sm); }
+    .m-lg { margin-bottom:var(--spacing-lg); }
+    .ml-lg { margin-left:var(--spacing-lg); }
+    .centered { text-align:center; }
+    .text-lg { font-size:var(--text-lg); }
+    .text-xl { font-size:var(--text-xl); }
+    .font-bold { font-weight:var(--font-bold); }
+    .review-list { list-style:none; padding:0; }
+    .review-item { margin-bottom:var(--spacing-lg); }
+    .correct { color:var(--review-correct); font-weight:var(--font-bold); }
+    .wrong { color:var(--review-wrong); }
+    .explanation { font-size:15px; color:var(--review-explanation); margin-top:5px; }
+    .timer { font-size:18px; color:var(--danger); text-align:right; margin-bottom:var(--spacing-sm); }
+  </style>
+</head>
+<body>
+  <h1 id="quizTitle"></h1>
+  <div class="centered mb">
+    <label for="importQuiz" class="spaced large bold">Import Quiz File:</label>
+    <input type="file" id="importQuiz" accept="application/json" class="spaced">
+  </div>
+  <div class="quiz-box">
+    <div class="mb">
+      <label for="numQuestions">Number of questions in session:</label>
+      <input type="number" id="numQuestions" min="1" value="5" class="input input--short">
+      <label for="sessionTime" class="spaced" aria-label="Timer in seconds">Timer (seconds):</label>
+      <input type="number" id="sessionTime" min="1" value="60" class="input input--short" aria-label="Timer in seconds">
+      <label for="modeSelect" class="spaced">Mode:</label>
+      <select id="modeSelect">
+        <option value="review">Review at End</option>
+        <option value="instant">Instant Answer</option>
+      </select>
+      <button onclick="startSession()" id="startSessionBtn" disabled>Start Session</button>
+    </div>
+    <div class="timer" id="timer"></div>
+    <div class="question" id="question">Loading question...</div>
+    <div class="options" id="options"></div>
+    <button onclick="submitInstant()" id="submitBtn">Submit</button>
+    <button onclick="nextQuestion()" id="nextBtn">Next</button>
+    <div class="result" id="result"></div>
+  </div>
+  <div id="scoreBox" class="score-box"></div>
+
+  <script>
+    function isAnswerValid(q, userValue) {
+      if (q.type === "text") return !!userValue;
+      if (q.type === "number") return userValue !== "";
+      if (q.type === "ucq") return userValue !== null;
+      if (q.type === "mcq") return Array.isArray(userValue) && userValue.length > 0;
+      return false;
+    }
+    function processAnswer(q, userValue, immediate = false) {
+      // Validation
+      if (!isAnswerValid(q, userValue)) {
+        let msg = "⚠️ Please answer!";
+        if (q.type === "text") msg = "⚠️ Enter an answer!";
+        else if (q.type === "number") msg = "⚠️ Enter a number!";
+        else if (q.type === "ucq") msg = "⚠️ Select an answer!";
+        else if (q.type === "mcq") msg = "⚠️ Select at least one!";
+        document.getElementById("result").textContent = msg;
+        return false;
+      }
+      // Store answer
+      userAnswers[sessionIndex] = userValue;
+      // Désactive les inputs après soumission
+      const optionInputs = document.querySelectorAll("input[name='option']");
+      optionInputs.forEach(input => input.disabled = true);
+      const textInput = document.getElementById("textAnswer");
+      if (textInput) textInput.disabled = true;
+      const numberInput = document.getElementById("numberAnswer");
+      if (numberInput) numberInput.disabled = true;
+      // Feedback if immediate
+      if (immediate) {
+        const isCorrect = checkAnswer(q, userValue);
+        document.getElementById("submitBtn").disabled = true;
+        let explanation = q.explanation || "";
+        let correctDisplay = formatAnswer(q, q.answer);
+        if (isCorrect) {
+          document.getElementById("result").innerHTML = "✅ Correct!<br><span style='font-size:15px;color:#555;'>" + explanation + "</span>";
+        } else {
+          document.getElementById("result").innerHTML = "❌ Wrong! Correct: " + correctDisplay + "<br><span style='font-size:15px;color:#555;'>" + explanation + "</span>";
+        }
+      }
+      return true;
+    }
+
+    function formatAnswer(q, answer) {
+      if (!isAnswerValid(q, answer)) return "Not answered";
+      if (q.type === "ucq") return q.options[answer];
+      if (q.type === "mcq") return answer.map(x => q.options[x]).join(", ");
+      return answer;
+    }
+
+    function getUserAnswer(q) {
+      if (q.type === "text") return document.getElementById("textAnswer")?.value || "";
+      if (q.type === "number") return document.getElementById("numberAnswer")?.value || "";
+      if (q.type === "ucq") {
+        const selected = document.querySelector("input[name='option']:checked");
+        return selected ? Number(selected.value) : null; // ✅ Corrigé
+      }
+      if (q.type === "mcq") 
+        return [...document.querySelectorAll("input[name='option']:checked")].map(cb => Number(cb.value));
+      return null;
+    }
+
+    function checkAnswer(q, userValue) {
+      if (q.type === "text") return isPermissiveMatch(userValue, q.answer);
+      if (q.type === "number") return Number(userValue) === Number(q.answer);
+      if (q.type === "ucq") return userValue === q.answer;
+      if (q.type === "mcq") return Array.isArray(userValue) && JSON.stringify([...userValue].sort()) === JSON.stringify([...q.answer].sort());
+      return false;
+    }
+
+    function renderOptions(q, mode) {
+  if (q.type === "text") return `<label for='textAnswer' aria-label='Text answer' class='mb'>Your answer:<input type='text' id='textAnswer' class='input input--wide mb' aria-label='Text answer'></label>`;
+  if (q.type === "number") return `<label for='numberAnswer' aria-label='Number answer' class='mb'>Your answer:<input type='number' id='numberAnswer' class='input input--medium mb' aria-label='Number answer'></label>`;
+      if (q.type === "ucq") return q.options.map((opt, i) => `<label for='ucq${i}'><input type="radio" id="ucq${i}" name="option" value="${i}" aria-label="${opt}"> ${opt}</label>`).join("");
+      if (q.type === "mcq") return q.options.map((opt, i) => `<label for='mcq${i}'><input type="checkbox" id="mcq${i}" name="option" value="${i}" aria-label="${opt}"> ${opt}</label>`).join("");
+      return "";
+    }
+
+    function setQuizTitle(data, fileName) {
+      if (data.title) {
+        document.getElementById('quizTitle').textContent = data.title;
+      } else if (fileName) {
+        let name = fileName;
+        if (name.toLowerCase().endsWith('.json')) name = name.slice(0, -5);
+        document.getElementById('quizTitle').textContent = name;
+      } else {
+        document.getElementById('quizTitle').textContent = "Revision Quiz";
+      }
+    }
+    let quiz = [];
+    fetch('quiz.json')
+      .then(response => response.json())
+      .then(data => {
+        quiz = data;
+        document.getElementById('startSessionBtn').disabled = false;
+        setQuizTitle(data);
+      })
+      .catch(err => {
+        alert('Could not load quiz data.');
+      });
+
+    document.getElementById('importQuiz').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          quiz = data;
+          document.getElementById('startSessionBtn').disabled = false;
+          setQuizTitle(data, file.name);
+          alert('Quiz imported successfully!');
+        } catch (err) { alert('Invalid quiz file. Please select a valid JSON file.'); }
+      };
+      reader.readAsText(file);
+    });
+
+    let sessionActive = false, sessionQuestions = [], sessionIndex = 0;
+    let score = 0, userAnswers = [], timer = null, timeLeft = 0, mode = "review";
+
+    function startSession() {
+      document.getElementById("submitBtn").style.display = "none";
+      const n = parseInt(document.getElementById("numQuestions").value);
+      const customTime = parseInt(document.getElementById("sessionTime").value);
+      mode = document.getElementById("modeSelect").value;
+      if (isNaN(n) || n < 1 || n > quiz.length) return alert("Invalid number of questions.");
+      if (isNaN(customTime) || customTime < 1) return alert("Invalid timer value.");
+      sessionActive = true; score = 0; sessionIndex = 0; userAnswers = [];
+      document.getElementById("nextBtn").style.display = "inline-block";
+      document.getElementById("result").style.display = "block";
+      sessionQuestions = shuffle(quiz).slice(0, n);
+      document.getElementById("nextBtn").disabled = false;
+      document.getElementById("result").textContent = "";
+      document.getElementById("scoreBox").classList.add("hidden");
+      timeLeft = customTime;
+      updateTimer();
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        if (--timeLeft <= 0) {
+          endSession();
+        } else {
+          updateTimer();
+        }
+      }, 1000);
+      loadSessionQuestion();
+    }
+
+    function updateTimer() { document.getElementById("timer").textContent = sessionActive ? `⏰ Time left: ${timeLeft}s` : ""; }
+
+    function endSession() {
+      sessionActive = false;
+      document.getElementById("timer").textContent = "";
+      document.getElementById("nextBtn").disabled = true;
+      if (timer) clearInterval(timer);
+      document.getElementById("scoreBox").classList.remove("hidden");
+      showReview();
+    }
+
+    function showReview() {
+      document.documentElement.setAttribute("data-theme", "review");
+      let reviewHtml = `<h2>📖 Correction</h2><ul class='review-list'>`;
+      quizDone = sessionQuestions.length;
+      let correctCount = 0;
+      sessionQuestions.forEach((q, i) => {
+        const userAns = userAnswers[i];
+        const correctAnsText = formatAnswer(q, q.answer);
+        const userAnsText = formatAnswer(q, userAns);
+        const isCorrect = checkAnswer(q, userAns);
+        if (isCorrect) correctCount++;
+        reviewHtml += `
+          <li class="review-item">
+            <strong>Q${i+1}:</strong> ${q.q}<br>
+            ✅ Correct : <span class="correct">${correctAnsText}</span><br>
+            📝 Your answer : <span class="${isCorrect ? 'correct' : 'wrong'}">${userAnsText}</span><br>
+            <div class="explanation">${q.explanation || ""}</div>
+          </li>`;
+      });
+      reviewHtml += `</ul><div class='score-box'>Final Score: ${correctCount}/${quizDone}</div>`;
+      document.getElementById("question").innerHTML = "Session complete!";
+      document.getElementById("options").innerHTML = reviewHtml;
+
+      document.getElementById("nextBtn").style.display = "none";
+      document.getElementById("result").style.display = "none";
+    }
+
+    function loadSessionQuestion() {
+      document.getElementById("result").textContent = "";
+      if (!sessionActive || sessionIndex >= sessionQuestions.length) return endSession();
+      const q = sessionQuestions[sessionIndex];
+      document.getElementById("question").textContent = `Q${sessionIndex+1}: ${q.q}`;
+      const opts = renderOptions(q, mode);
+      document.getElementById("options").innerHTML = opts;
+      if (mode === "instant") {
+        document.getElementById("submitBtn").style.display = "inline-block";
+        document.getElementById("nextBtn").style.display = "none";
+      } else {
+
+        document.getElementById("submitBtn").style.display = "none";
+        document.getElementById("nextBtn").style.display = "inline-block";
+      }
+      document.getElementById("submitBtn").disabled = false;
+      document.getElementById("nextBtn").disabled = false;
+    }
+
+    function nextQuestion() {
+      if (!sessionActive) return;
+      if (mode === 'instant') {
+        if (userAnswers[sessionIndex] === undefined) return document.getElementById("result").textContent = "⚠️ Please answer!";
+      } else {
+        const q = sessionQuestions[sessionIndex];
+        const userValue = getUserAnswer(q);
+        if (!processAnswer(q, userValue, false)) return;
+      }
+      sessionIndex++;
+      if (sessionIndex < sessionQuestions.length) loadSessionQuestion(); else endSession();
+    }
+
+    function normalize(str) { return str?.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]/gi, "") || ""; }
+    function isPermissiveMatch(user, correct) { return normalize(user) === normalize(correct); }
+
+    function submitInstant() {
+      if (!sessionActive) return;
+      if (userAnswers[sessionIndex] !== undefined) return;
+      const q = sessionQuestions[sessionIndex];
+      const userValue = getUserAnswer(q);
+      if (!isAnswerValid(q, userValue)) {
+        document.getElementById("result").textContent = "⚠️ Veuillez entrer une réponse !";
+        return;
+      }
+      processAnswer(q, userValue, true);
+      document.getElementById("submitBtn").style.display = "none";
+      document.getElementById("nextBtn").style.display = "inline-block";
+    }
+
+    function shuffle(array) { let arr = array.slice(); for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    document.getElementById("nextBtn").disabled = true;
+
+    document.addEventListener('keydown', function(e) {
+      if (!sessionActive) return;
+      const num = parseInt(e.key);
+
+      if (!isNaN(num) && num >= 1 && num <= 9) {
+        const options = document.getElementsByName('option');
+        if (num - 1 < options.length) {
+          const input = options[num - 1];
+          if (!input.disabled) {
+
+            if (input.type === "checkbox") {
+              input.checked = !input.checked;
+            } else {
+              input.checked = true;
+            }
+          }
+        }
+      }
+
+      if (e.code === 'Space' || e.code === 'Enter') {
+        const q = sessionQuestions[sessionIndex];
+        const userValue = getUserAnswer(q);
+
+        if (mode === 'instant') {
+          if (userAnswers[sessionIndex] === undefined) {
+          
+            if (!isAnswerValid(q, userValue)) {
+              document.getElementById("result").textContent = "⚠️ Please answer!";
+              e.preventDefault();
+              return;
+            }
+            submitInstant(); 
+          } else {
+            nextQuestion();
+          }
+        } else {
+      
+          if (!processAnswer(q, userValue, false)) {
+            e.preventDefault();
+            return; 
+          }
+          nextQuestion();
+        }
+
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
