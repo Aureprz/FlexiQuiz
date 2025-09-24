@@ -1,0 +1,54 @@
+[
+  {
+    "q": "Which planet is known as the Red Planet?",
+    "type": "ucq",
+    "options": ["Earth", "Mars", "Jupiter", "Venus"],
+    "answer": 1,
+    "explanation": "Mars is called the Red Planet due to the iron oxide on its surface."
+  },
+  {
+    "q": "Which of the following are gas giants?",
+    "type": "mcq",
+    "options": ["Mercury", "Saturn", "Uranus", "Venus", "Jupiter"],
+    "answer": [1, 2, 4],
+    "explanation": "Saturn, Uranus, and Jupiter are gas giants with thick atmospheres primarily composed of hydrogen and helium."
+  },
+  {
+    "q": "What is the name of our galaxy?",
+    "type": "text",
+    "answer": "Milky Way",
+    "explanation": "Our solar system is located in the Milky Way galaxy."
+  },
+  {
+    "q": "How many planets are in our Solar System?",
+    "type": "number",
+    "answer": 8,
+    "explanation": "There are 8 planets in our Solar System: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune."
+  },
+  {
+    "q": "Which planet has the largest moon in the Solar System?",
+    "type": "ucq",
+    "options": ["Earth", "Saturn", "Jupiter", "Neptune"],
+    "answer": 2,
+    "explanation": "Jupiter's moon Ganymede is the largest moon in the Solar System."
+  },
+  {
+    "q": "Select the inner planets of the Solar System.",
+    "type": "mcq",
+    "options": ["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"],
+    "answer": [0, 1, 2, 3],
+    "explanation": "The inner planets, also called terrestrial planets, are Mercury, Venus, Earth, and Mars."
+  },
+  {
+    "q": "What is the closest star to Earth?",
+    "type": "text",
+    "answer": "Sun",
+    "explanation": "The Sun is the closest star to Earth."
+  },
+  {
+    "q": "In which year did humans first land on the Moon?",
+    "type": "number",
+    "answer": 1969,
+    "explanation": "Neil Armstrong and Buzz Aldrin landed on the Moon in 1969 during the Apollo 11 mission."
+  }
+]

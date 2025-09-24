@@ -1,0 +1,593 @@
+/* -------------------------
+   Base variables
+------------------------- */
+:root {
+  --spacing-sm: 10px;
+  --spacing-lg: 15px;
+  --primary: #0077cc;
+  --primary-hover: #005fa3;
+  --danger: #d32f2f;
+  --review-explanation: #555;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --font-bold: 700;
+}
+
+/* 🌞 Light Theme (default) */
+:root[data-theme="light"] {
+  --bg: #f0f2f5;
+  --text: #000;
+  --card-bg: #fff;
+  --border: #ccc;
+  --progress-bg: #2e7d32;
+  --time-bg: #cf7200;
+  --input-bg: #fff;
+  --input-border: #ccc;
+  --link: #0077cc;
+  --link-hover: #005fa3;
+  --link-visited: #551a8b;
+  --review-correct: #2e7d32;
+  --review-wrong: #c62828;
+}
+
+/* 🌙 Dark Theme */
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --text: #eee;
+  --card-bg: #1e1e1e;
+  --border: #444;
+  --progress-bg: #4caf50;
+  --time-bg: #ff9800;
+  --input-bg: #2a2a2a;
+  --input-border: #555;
+  --link: #4dabf7;
+  --link-hover: #82c7ff;
+  --link-visited: #a97fff;
+  --review-correct: #81c784;
+  --review-wrong: #ef5350;
+}
+
+/* -------------------------
+   Global styles
+------------------------- */
+html, body {
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden; /* prevents horizontal scrolling */
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* avoids clipping the top when centering vertically */
+  align-items: center;     /* horizontally center */
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+h1 {
+  text-align: center;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+}
+
+/* -------------------------
+   Quiz container
+------------------------- */
+.quiz-box {
+  width: 100%;
+  max-width: 760px;
+  margin: 18px auto;
+  padding: clamp(12px, 2vw, 24px);
+  box-sizing: border-box;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  overflow-wrap: break-word;
+}
+
+.question {
+  font-size: clamp(1.125rem, 3.5vw, 1.5rem); /* 18–24px fluide */
+  font-weight: var(--font-bold);
+  margin-bottom: var(--spacing-lg);
+}
+
+.options {
+  display: flex;
+  flex-direction: column; /* toujours vertical */
+  gap: 8px;
+}
+
+.options label {
+  font-size: clamp(1rem, 3vw, 1.25rem); /* 16–20px fluid */
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  overflow-wrap: break-word;
+}
+
+/* top container (numQuestions, timer, mode, checkbox, button) */
+.quiz-box .mb {
+  display: flex;
+  flex-wrap: wrap;        /* permet de passer à la ligne si manque de place */
+  align-items: center;    /* aligne verticalement les items */
+  gap: 10px;              /* espace régulier entre eux */
+}
+
+/* inputs/selects/buttons never overflow their container */
+.quiz-box input,
+.quiz-box select,
+.quiz-box button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* timer + questions + select use flexible space */
+.quiz-box input[type="number"],
+.quiz-box select {
+  flex: 1 1 auto;
+  min-width: 80px;        /* minimum to prevent them from shrinking too much */
+}
+
+/* bouton Start Session bien visible */
+#startSessionBtn {
+  flex: 1 1 100%;         /* button takes full width on small screens */
+  max-width: 240px;       /* limit on large screens */
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+/* checkbox + label sur une seule ligne */
+.quiz-box label[for="freeTraining"] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+/* -------------------------
+   Buttons
+------------------------- */
+button {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  padding: clamp(10px, 2vw, 14px) clamp(16px, 4vw, 24px);
+  border-radius: 8px;
+  margin-top: var(--spacing-sm);
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+button:hover {
+  background: var(--primary-hover);
+}
+
+/* Boutons Next et Submit : larges, carrés, centrés */
+#submitBtn,
+#nextBtn {
+  display: block;
+  margin: 20px auto 0 auto; /* centrés */
+  width: 100%;             /* occupe toute la largeur de la quiz-box */
+  font-size: 1.2rem;
+  padding: 14px 0;         /* bien hauts et larges */
+  border-radius: 8px;
+  box-sizing: border-box;  /* padding inclus dans la largeur */
+}
+
+
+/* -------------------------
+   Results & score
+------------------------- */
+.result {
+  font-size: clamp(1rem, 2.8vw, 1.25rem);
+  font-weight: var(--font-bold);
+  margin-top: var(--spacing-sm);
+}
+
+.score-box {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  text-align: center;
+  font-weight: var(--font-bold);
+  margin-top: var(--spacing-lg);
+}
+
+/* -------------------------
+   Utilities
+------------------------- */
+.hidden { display: none !important; }
+.m-sm { margin-bottom: var(--spacing-sm); }
+.m-lg { margin-bottom: var(--spacing-lg); }
+.mb { margin-bottom: var(--spacing-lg); }
+.ml-lg { margin-left: var(--spacing-lg); }
+.centered { text-align: center; }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.font-bold { font-weight: var(--font-bold); }
+
+/* accessibility helper for screen-reader-only text */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap; /* prevent line breaks */
+  border: 0;
+}
+
+/* small utility aliases used in HTML */
+.spaced { margin-right: var(--spacing-sm); }
+.large { font-size: var(--text-xl); }
+.bold { font-weight: var(--font-bold); }
+
+/* -------------------------
+   Modal (import chooser)
+------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  z-index: 1200;
+}
+.modal.hidden { display: none; }
+
+.modal-content {
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 18px 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  min-width: 280px;
+  max-width: 90%;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.modal-actions button {
+  margin: 0;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+}
+.modal-actions button:hover { filter: brightness(0.95); }
+
+/* -------------------------
+   Review styles
+------------------------- */
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.review-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  overflow-wrap: break-word;
+}
+
+.review-item .question {
+  font-size: clamp(1rem, 3vw, 1.3rem);
+  margin-bottom: 8px;
+}
+
+.review-item .explanation {
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  line-height: 1.4;
+  margin-top: 6px;
+  color: var(--review-explanation);
+}
+
+/* -------------------------
+------------------------- */
+.timer {
+  font-size: 18px;
+  color: var(--danger);
+  text-align: right;
+  margin-bottom: var(--spacing-sm);
+}
+
+.double-bar-container {
+  width: 100%;
+  max-width: 100%; /* ne dépasse jamais la boîte parente */
+  margin: 10px 0;  /* petit espace vertical */
+  box-sizing: border-box; /* padding inclus dans la largeur */
+}
+
+.progress-container,
+.time-container {
+  width: 100%;
+  background: #e0e0e0;
+  overflow: hidden;
+  margin-bottom: 0px;
+}
+
+.progress-container {
+  height: 18px;
+  border-radius: 10px 10px 0 0;
+}
+
+.time-container {
+  height: 14px;
+  border-radius: 0 0 10px 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--progress-bg) !important;
+  transition: width 0.4s ease;
+}
+
+.time-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--time-bg) !important;
+  transition: width 1s linear;
+}
+
+/* -------------------------
+   Input styles
+------------------------- */
+input, select, textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--primary);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
+
+/* -------------------------
+   Link styles
+------------------------- */
+a {
+  color: var(--link);
+  text-decoration: underline;
+}
+a:hover { color: var(--link-hover); }
+a:visited { color: var(--link-visited); }
+
+/* -------------------------
+   Responsive helpers
+------------------------- */
+.app-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+button, input[type="text"], input[type="number"], select, textarea {
+  width: auto;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .quiz-box { padding: 12px; border-radius: 10px; }
+  .options label { font-size: 0.95rem; }
+  button { width: 100%; display: block; margin-bottom: 10px; }
+  .double-bar-container { height: 36px; }
+
+  .double-bar-container.stack-vertical {
+    display: flex;
+    flex-direction: column;
+    height: 40px;
+  }
+  .double-bar-container.stack-vertical .progress-bar,
+  .double-bar-container.stack-vertical .time-bar {
+    height: 50%;
+    width: 100%;
+    transition: width 0.35s linear;
+  }
+
+  /* MODIFICATION: exclure les checkboxes/radios */
+  .quiz-box input:not([type="checkbox"]):not([type="radio"]),
+  .quiz-box select {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .quiz-box .input--short { max-width: 100%; }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .quiz-box { max-width: 680px; }
+  button { padding: 10px 14px; }
+}
+
+/* images / media responsive */
+img, video { max-width: 100%; height: auto; display: block; }
+
+/* utilities useful for responsive layout */
+.row { display: flex; flex-wrap: wrap; gap: 12px; }
+.col { flex: 1 1 0; min-width: 0; }
+.col-50 { flex: 1 1 48%; }
+.col-100 { flex: 1 1 100%; }
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap; /* passe à la ligne si trop serré */
+  gap: 12px;       /* espace entre eux */
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  flex: 1; /* les labels s’adaptent à l’espace */
+  min-width: 120px;
+}
+
+.form-row input {
+  flex: 2; /* les inputs prennent plus de place */
+  min-width: 80px;
+}
+
+/* Empêche inputs + labels de déborder */
+.quiz-box label,
+.quiz-box input,
+.quiz-box select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Garder No timer + case à cocher sur la même ligne */
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-checkbox input[type="checkbox"] {
+  width: auto;
+  flex-shrink: 0;
+}
+
+/* empêche tout débordement de texte sur petits écrans */
+.quiz-box,
+.question,
+.options label,
+.review-item,
+button {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%; /* ne jamais dépasser la largeur de l'écran */
+}
+
+.review-correct {
+  color: var(--review-correct);
+  font-weight: bold;
+}
+
+.review-wrong {
+  color: var(--review-wrong);
+  font-weight: bold;
+}
+
+@media (min-width: 901px) {
+  .quiz-box {
+    width: clamp(50%, 65%, 70%); /* fluide entre 50 et 70% */
+    margin: 20px auto;
+  }
+}
+
+
+/* Forcer la checkbox et son texte à rester collés */
+.inline-checkbox,
+.quiz-box label[for="freeTraining"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;          /* petit espace régulier */
+  white-space: normal;  /* autorise le texte long à passer à la ligne */
+}
+
+.inline-checkbox input[type="checkbox"],
+.quiz-box label[for="freeTraining"] input[type="checkbox"] {
+  flex-shrink: 0; /* la case ne rétrécit jamais */
+}
+
+/* Règle générale pour toutes les cases à cocher et radios */
+input[type="checkbox"],
+input[type="radio"] {
+  margin: 0;                /* enlève les marges par défaut */
+  vertical-align: middle;   /* bien aligné avec le texte */
+}
+
+/* Le label garde la case et son texte collés */
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;              /* petit espace entre case et texte */
+  white-space: normal;   /* permet le retour à la ligne si texte trop long */
+}
+
+/* Conteneur des paramètres */
+.session-params {
+  background: var(--card-bg);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Version compacte */
+.session-params.compact {
+  height: 40px; /* hauteur fixe pour le ruban */
+  padding: 4px 12px;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* cache tout sauf le ruban */
+.session-params.compact > * {
+  display: none; /* tout enfant est caché */
+}
+
+/* texte du ruban */
+.session-params.compact::before {
+  content: "⚙️ Session Parameters (click to expand)";
+  display: block;
+  line-height: 40px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column; /* empile les labels + inputs */
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  max-width: 760px; /* même que quiz-box */
+}
+
+.centered input,
+.centered select {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.centered label {
+  white-space: normal;
+  overflow-wrap: break-word;
+}

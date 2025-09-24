@@ -1,5 +1,5 @@
 
-# FlexiQuiz v1.1
+# FlexiQuiz v1.2
 
 ## Project Overview
 
@@ -15,6 +15,18 @@
 - **Review at End Mode**: Get feedback for all questions at the end of the quiz.
 - **Automatic hiding** of Next buttons and feedback during review.
 - **Keyboard shortcuts**: Quickly select options (1-9), validate (Space/Enter).
+
+---
+
+## Newly added
+
+- **Import multiple quizzes at once**: select one or more JSON files or a whole folder of quiz files; all valid JSON quizzes are loaded and added to the quizzes list.
+- **Quiz selection UI**: imported quizzes are stored in a selectable list; you can pick which quiz to start from the imported set (the example quiz is added by default).
+- **Import confirmation modal**: importing uses a small modal that lets you choose whether to import a single file or a folder (improves UX compared to a plain confirm()).
+- **Save & resume sessions (localStorage)**: sessions are periodically saved (including answers, index, time left and mode). If a saved active session exists, the app offers to resume it on load.
+- **Persistent theme**: the chosen light/dark theme is remembered in localStorage and applied on next visits. If no theme is stored, the OS preference is used.
+- **Automatic input locking after answer**: once an answer is submitted for a question inputs are disabled to prevent accidental changes during the same session.
+- **Export buttons hidden on session start**: when a session starts export controls are hidden to avoid accidental export during a live quiz.
 
 ---
 
@@ -158,6 +170,7 @@ Example:
   {"q": "What is a protocol?", "type": "ucq", "options": ["File", "Rules", "Device"], "answer": 1},
   {"q": "How many OSI layers?", "type": "number", "answer": 7},
   {"q": "Protocol for email?", "type": "text", "answer": "SMTP"}
+  {"q": "Which are JavaScript frameworks?", "type": "mcq", "options": ["React", "Django", "Vue", "Laravel"], "answer": [0, 2], "explanation": "React and Vue are JavaScript frameworks."}
 ]
 ```
 No title field, no extra metadata. The file name is the quiz title.
@@ -177,5 +190,9 @@ No title field, no extra metadata. The file name is the quiz title.
 **FlexiQuiz v1.1 — Learn, test, improve!**
 
 ---
+Credits
+-------
 
-Made by [Aureprz](https://github.com/Aureprz)
+- Live demo: https://aureprz.github.io/FlexiQuiz/
+- Author / repo: https://github.com/Aureprz/FlexiQuiz
+- Made by [Aureprz](https://github.com/Aureprz)

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FlexiQuiz</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h1 id="quizTitle" aria-live="polite"></h1>
+  <div class="centered mb">
+  <label class="spaced large bold">Import a quiz:</label>
+
+  <button id="importBtn" type="button" class="spaced">Import</button>
+
+  <input type="file" id="importQuizFile" accept=".json,application/json" hidden>
+  <input type="file" id="importQuizFolder" accept=".json,application/json" multiple webkitdirectory mozdirectory hidden>
+  
+  <div id="confirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Import a quiz</h3>
+      <p>Choose import mode:</p>
+      <div class="modal-actions">
+        <button id="okBtn" type="button">📄 File</button>
+        <button id="cancelBtn" type="button">📁 Folder</button>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="centered mb">
+    <label for="quizSelect">Choose a quiz:</label>
+    <select id="quizSelect" onchange="selectQuiz()">
+      <option value="" disabled selected hidden>-- No quiz loaded --</option>
+    </select>
+  </div>
+  <div class="centered mb">
+    <button id="themeToggle" aria-pressed="false" aria-label="Toggle dark mode">🌙 Dark Mode</button>
+  </div>
+  <div class="quiz-box" role="main" aria-label="Quiz area">
+    <!-- session parameters -->
+    <div id="sessionParams" class="session-params">
+      <label for="numQuestions">Number of questions in session:</label>
+      <input type="number" id="numQuestions" min="1" value="5" class="input input--short">
+
+  <label for="sessionTime" class="spaced">Timer (seconds):</label>
+      <input type="number" id="sessionTime" min="1" value="60" class="input input--short">
+
+      <label for="modeSelect" class="spaced">Mode:</label>
+      <select id="modeSelect">
+        <option value="review">Review at End</option>
+        <option value="instant">Instant Answer</option>
+      </select>
+
+      <label for="freeTraining" class="spaced">
+        <input type="checkbox" id="freeTraining">No Timer
+      </label>
+
+      <button onclick="startSession()" id="startSessionBtn" disabled>Start Session</button>
+    </div>
+    <div class="timer" id="timer" aria-live="polite" aria-atomic="true"></div>
+    <div class="question" id="question" aria-live="polite" aria-atomic="true"></div>
+    <div class="options" id="options" role="group" aria-label="Answer options"></div>
+    <button onclick="submitInstant()" id="submitBtn" aria-label="Submit answer">Submit</button>
+    <button onclick="nextQuestion()" id="nextBtn" aria-label="Next question">Next</button>
+    <div class="result" id="result" aria-live="polite" aria-atomic="true"></div>
+    <div class="export-buttons" style="margin-top:15px; display:none;" id="exportBtns">
+      <button onclick="exportResultsJSON()">Exporter en JSON</button>
+      <button onclick="exportResultsCSV()">Exporter en CSV</button>
+    </div>
+    <div class="double-bar-container" aria-label="Progress and time bars">
+      <div class="progress-container" aria-label="Progress bar">
+        <div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="time-container" aria-label="Time bar">
+        <div class="time-bar" id="timeBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scoreBox" class="score-box" aria-live="polite" aria-atomic="true"></div>
+  <div id="performanceGraph" class="centered" aria-label="Performance graph" style="margin: 24px 0;"></div>
+
+  <footer class="footer" aria-label="Footer">
+    <hr class="footer-hr">
+    <span>Made by <a href="https://github.com/Aureprz" target="_blank" class="footer-link">Aureprz</a> &mdash; <a href="https://github.com/Aureprz/FlexiQuiz" target="_blank" class="footer-link">GitHub</a></span>
+  </footer>
+
+  <script src="../js/script.js"></script>
+</body>
+</html>
