@@ -2,9 +2,9 @@
 
 Live demo: https://aureprz.github.io/FlexiQuiz/
 
-File: `html/index.html`
+File: `docs/index.html`
 
-This README describes only `index.html` in the `html/` folder. There is a general repository README at the project root; this file focuses on the HTML structure and how the page connects to the JS/CSS assets.
+This README describes only `index.html` in the `docs/` folder. There is a general repository README at the project root; this file focuses on the HTML structure and how the page connects to the JS/CSS assets.
 
 Purpose
 
@@ -83,7 +83,7 @@ Accessibility and ARIA
 
 How to test locally
 
-- Open `html/index.html` directly. If quizzes fail to load because of fetch/file restrictions, run a simple HTTP server from the repo root and open the page via http://. Example (from the repo root):
+- Open `docs/index.html` directly. If quizzes fail to load because of fetch/file restrictions, run a simple HTTP server from the repo root and open the page via http://. Example (from the repo root):
 
 ```powershell
 python -m http.server 8000
@@ -91,7 +91,7 @@ python -m http.server 8000
 
 Then open:
 
-http://localhost:8000/html/
+http://localhost:8000/docs/
 
 Troubleshooting tips
 
@@ -103,6 +103,7 @@ Notes
 - There is a general README at the project root that covers repository-wide details. This file documents the HTML structure and how it ties to the JS behavior.
 
 Credits
+-------
 
 - Live demo: https://aureprz.github.io/FlexiQuiz/
 - Author / repo: https://github.com/Aureprz/FlexiQuiz
