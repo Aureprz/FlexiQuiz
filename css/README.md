@@ -1,10 +1,5 @@
 # 🎨 CSS Styles — FlexiQuiz
 
-Credits
--------
-
-- FlexiQuiz project — original design and functionality
-- Author / Contributor: Aureprz
 
 ---
 
@@ -43,8 +38,6 @@ Optional review theme variables (activated with `data-theme="review"` on `:root`
 - `.m-sm` / `.m-lg` / `.ml-lg`: margin utilities for quick spacing.
 - `.centered`: center text.
 - `.text-lg` / `.text-xl` / `.font-bold`: typography utilities.
-
-Add additional utilities here as needed for reusability.
 
 ---
 
@@ -92,9 +85,8 @@ Edit `css/style.css` to change visuals. Keep this README updated when variables 
 
 ---
 
-If you want, I can:
+Credits
+-------
 
-- generate a `css/variables.md` file listing all CSS variables with their current values (auto-generated), or
-- implement an optional dark theme and document how to enable it.
-
-Tell me which option you prefer.
+- Live demo: https://aureprz.github.io/FlexiQuiz/
+- Author / repo: https://github.com/Aureprz/FlexiQuiz
