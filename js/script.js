@@ -92,15 +92,8 @@ function resumeSessionFromState(saved) {
   }
   document.documentElement.setAttribute("data-theme", savedTheme);
 
-// Escape HTML to prevent injection
-  function escapeHTML(str) {
-    if (typeof str !== "string") return str;
-    return str.replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  // We intentionally avoid HTML injection by always inserting JSON strings
+  // with textContent instead of innerHTML.
 
   function updateInstantScore() {
     let correct = 0;
@@ -159,14 +152,13 @@ function resumeSessionFromState(saved) {
       let correctDisplay = formatAnswer(q, q.answer);
       const resultEl = document.getElementById("result");
       if (resultEl) {
+        // Show literal text from JSON without executing HTML
         if (isCorrect) {
-          resultEl.innerHTML =
-            "✅ Correct!<br><span style='font-size:15px;color:#555;'>" + escapeHTML(explanation) + "</span>";
+          resultEl.textContent = `✅ Correct!${explanation ? "\n" + explanation : ""}`;
         } else {
-          resultEl.innerHTML =
-            "❌ Wrong! Correct: " + escapeHTML(correctDisplay) +
-            "<br><span style='font-size:15px;color:#555;'>" + escapeHTML(explanation) + "</span>";
+          resultEl.textContent = `❌ Wrong! Correct: ${correctDisplay}${explanation ? "\n" + explanation : ""}`;
         }
+        resultEl.style.whiteSpace = 'pre-line';
       }
       if (mode === "instant") updateInstantScore();
     }
@@ -176,9 +168,9 @@ function resumeSessionFromState(saved) {
   function formatAnswer(q, answer) {
     if (!q) return "";
     if (!isAnswerValid(q, answer)) return "Not answered";
-    if (q.type === "ucq") return escapeHTML(q.options[answer]);
-    if (q.type === "mcq") return answer.map(x => escapeHTML(q.options[x])).join(", ");
-    return escapeHTML(String(answer));
+    if (q.type === "ucq") return q.options[answer];
+    if (q.type === "mcq") return answer.map(x => q.options[x]).join(", ");
+    return String(answer);
   }
 
   function getUserAnswer(q) {
@@ -205,19 +197,55 @@ function resumeSessionFromState(saved) {
     return false;
   }
 
-  function renderOptions(q, mode) {
-  if (q.type === "text")
-    return `<label for='textAnswer'>Your answer:<input type='text' id='textAnswer' class='input input--wide mb'></label>`;
-  if (q.type === "number")
-    return `<label for='numberAnswer'>Your answer:<input type='number' id='numberAnswer' class='input input--medium mb'></label>`;
-  if (q.type === "ucq")
-    return q.options.map((opt, i) =>
-      `<label for='ucq${i}'><input type="radio" id="ucq${i}" name="option" value="${i}"> ${escapeHTML(opt)}</label>`).join("");
-  if (q.type === "mcq")
-    return q.options.map((opt, i) =>
-      `<label for='mcq${i}'><input type="checkbox" id="mcq${i}" name="option" value="${i}"> ${escapeHTML(opt)}</label>`).join("");
-  return "";
-}
+  function renderOptionsInto(q, container) {
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    if (q.type === "text") {
+      const label = document.createElement('label');
+      label.setAttribute('for', 'textAnswer');
+      label.textContent = 'Your answer:';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'textAnswer';
+      input.className = 'input input--wide mb';
+      label.appendChild(input);
+      container.appendChild(label);
+      return;
+    }
+
+    if (q.type === "number") {
+      const label = document.createElement('label');
+      label.setAttribute('for', 'numberAnswer');
+      label.textContent = 'Your answer:';
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.id = 'numberAnswer';
+      input.className = 'input input--medium mb';
+      label.appendChild(input);
+      container.appendChild(label);
+      return;
+    }
+
+    if (q.type === "ucq" || q.type === "mcq") {
+      (q.options || []).forEach((opt, i) => {
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = q.type === 'ucq' ? 'radio' : 'checkbox';
+        input.id = `${q.type}${i}`;
+        input.name = 'option';
+        input.value = String(i);
+        label.setAttribute('for', `${q.type}${i}`);
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(' '));
+        const span = document.createElement('span');
+        span.textContent = opt; // literal display
+        label.appendChild(span);
+        container.appendChild(label);
+      });
+      return;
+    }
+  }
 
 function setQuizTitle(data, fallbackName) {
   const title = data?.title || fallbackName || "Untitled Quiz";
@@ -465,25 +493,63 @@ if (importBtn) {
     document.body.classList.add("review-mode");
     updateProgressBar();
     const scoreBox = document.getElementById("scoreBox"); if (scoreBox) scoreBox.classList.add("hidden");
-    let reviewHtml = `<h2>📖 Review</h2><ul class='review-list'>`;
     let correctCount = 0;
-    sessionQuestions.forEach((q, i) => {
-      const userAns = userAnswers[i];
-      const correctAnsText = formatAnswer(q, q.answer);
-      const userAnsText = formatAnswer(q, userAns);
-      const isCorrect = checkAnswer(q, userAns);
-      if (isCorrect) correctCount++;
-      reviewHtml += `
-      <li class="review-item">
-        <strong>Q${i+1}:</strong> ${escapeHTML(q.q)}<br>
-  ✅ Correct: <span class="review-correct">${correctAnsText}</span><br>
-  📝 Your answer: <span class="${isCorrect ? 'review-correct' : 'review-wrong'}">${userAnsText}</span><br>
-        <div class="explanation">${escapeHTML(q.explanation || "")}</div>
-      </li>`;
-    });
-    reviewHtml += `</ul><div class='score-box'>Final Score: ${correctCount}/${sessionQuestions.length}</div>`;
-    const questionEl = document.getElementById("question"); if (questionEl) questionEl.innerHTML = "Session complete!";
-    const optionsEl = document.getElementById("options"); if (optionsEl) optionsEl.innerHTML = reviewHtml;
+    const questionEl = document.getElementById("question"); if (questionEl) questionEl.textContent = "Session complete!";
+    const optionsEl = document.getElementById("options"); if (optionsEl) {
+      while (optionsEl.firstChild) optionsEl.removeChild(optionsEl.firstChild);
+      const h2 = document.createElement('h2');
+      h2.textContent = '📖 Review';
+      optionsEl.appendChild(h2);
+      const ul = document.createElement('ul');
+      ul.className = 'review-list';
+      sessionQuestions.forEach((q, i) => {
+        const userAns = userAnswers[i];
+        const correctAnsText = formatAnswer(q, q.answer);
+        const userAnsText = formatAnswer(q, userAns);
+        const isCorrect = checkAnswer(q, userAns);
+        if (isCorrect) correctCount++;
+
+        const li = document.createElement('li');
+        li.className = 'review-item';
+
+        const qLine = document.createElement('div');
+        const strong = document.createElement('strong');
+        strong.textContent = `Q${i+1}:`;
+        qLine.appendChild(strong);
+        qLine.appendChild(document.createTextNode(' ' + q.q));
+        li.appendChild(qLine);
+
+        const correctLine = document.createElement('div');
+        const correctLabel = document.createTextNode('✅ Correct: ');
+        const correctSpan = document.createElement('span');
+        correctSpan.className = 'review-correct';
+        correctSpan.textContent = correctAnsText;
+        correctLine.appendChild(correctLabel);
+        correctLine.appendChild(correctSpan);
+        li.appendChild(correctLine);
+
+        const yourLine = document.createElement('div');
+        const yourLabel = document.createTextNode('📝 Your answer: ');
+        const yourSpan = document.createElement('span');
+        yourSpan.className = isCorrect ? 'review-correct' : 'review-wrong';
+        yourSpan.textContent = userAnsText;
+        yourLine.appendChild(yourLabel);
+        yourLine.appendChild(yourSpan);
+        li.appendChild(yourLine);
+
+        const expl = document.createElement('div');
+        expl.className = 'explanation';
+        expl.textContent = q.explanation || '';
+        li.appendChild(expl);
+
+        ul.appendChild(li);
+      });
+      optionsEl.appendChild(ul);
+      const scoreDiv = document.createElement('div');
+      scoreDiv.className = 'score-box';
+      scoreDiv.textContent = `Final Score: ${correctCount}/${sessionQuestions.length}`;
+      optionsEl.appendChild(scoreDiv);
+    }
     const nextBtn = document.getElementById("nextBtn"); if (nextBtn) nextBtn.style.display = "none";
     const resultEl = document.getElementById("result"); if (resultEl) resultEl.style.display = "none";
     const timerEl = document.getElementById("timer"); if (timerEl) timerEl.style.display = "none";
@@ -494,9 +560,9 @@ if (importBtn) {
   function loadSessionQuestion() {
     const resultEl = document.getElementById("result"); if (resultEl) resultEl.textContent = "";
     if (!sessionActive || sessionIndex >= sessionQuestions.length) return endSession();
-    const q = sessionQuestions[sessionIndex];
-    const questionEl = document.getElementById("question"); if (questionEl) questionEl.textContent = `Q${sessionIndex+1}: ${escapeHTML(q.q)}`;
-    const optionsEl = document.getElementById("options"); if (optionsEl) optionsEl.innerHTML = renderOptions(q, mode);
+  const q = sessionQuestions[sessionIndex];
+  const questionEl = document.getElementById("question"); if (questionEl) questionEl.textContent = `Q${sessionIndex+1}: ${q.q}`;
+  const optionsEl = document.getElementById("options"); if (optionsEl) renderOptionsInto(q, optionsEl);
     const submitBtn = document.getElementById("submitBtn"); const nextBtn = document.getElementById("nextBtn");
     if (mode === "instant") {
       if (submitBtn) submitBtn.style.display = "inline-block";
@@ -678,7 +744,14 @@ if (importBtn) {
   function updateQuizSelect() {
     const select = document.getElementById("quizSelect");
     if (!select) return;
-    select.innerHTML = '<option value="" disabled selected hidden>-- Choose a quiz --</option>';
+    while (select.firstChild) select.removeChild(select.firstChild);
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.hidden = true;
+    placeholder.textContent = '-- Choose a quiz --';
+    select.appendChild(placeholder);
     quizzes.forEach((quiz, index) => {
       const opt = document.createElement("option");
       opt.value = index;
